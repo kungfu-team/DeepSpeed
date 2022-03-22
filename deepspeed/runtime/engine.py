@@ -2671,6 +2671,9 @@ class DeepSpeedEngine(Module):
             else:
                 _state = {OPTIMIZER_STATE_DICT: None}
             zero_sd_list.append(_state)
+            
+        logger.info('Logger Hi Guo')
+        print('Print Hi Guo')
 
         zero_optimizer_sd = [sd[OPTIMIZER_STATE_DICT] for sd in zero_sd_list]
         logger.info(
