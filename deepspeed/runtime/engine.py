@@ -2418,6 +2418,8 @@ class DeepSpeedEngine(Module):
                                                          load_optimizer_states=load_optimizer_states,
                                                          load_lr_scheduler_states=load_lr_scheduler_states,
                                                          load_module_only=load_module_only)
+                                                         
+        print('finished _load_checkpoint')
 
         if self.zero_optimization() and load_path is not None:
             success = self._load_zero_checkpoint(
@@ -2426,9 +2428,13 @@ class DeepSpeedEngine(Module):
                 load_optimizer_states=load_optimizer_states)
             if not success:
                 self.optimizer._restore_from_bit16_weights()
+        
+        print('finished _load_zero_checkpoint')
 
         if self.zero_optimization_partition_weights():
             self.optimizer.checkpoint_event_epilogue()
+            
+        print('before return load_checkpoint')
 
         return load_path, client_states
 
@@ -2444,6 +2450,8 @@ class DeepSpeedEngine(Module):
 
         ckpt_list = self._get_all_ckpt_names(load_dir, tag)
         sd_loader = SDLoaderFactory.get_sd_loader(ckpt_list)
+        
+        print(f'ckpt_list {ckpt_list}')
 
         is_pipe_parallel = isinstance(self.module, PipelineModule)
 
@@ -2474,6 +2482,8 @@ class DeepSpeedEngine(Module):
 
         self.load_module_state_dict(state_dict=checkpoint['module'],
                                     strict=load_module_strict)
+                                    
+        print('finished load_module_state_dict')
 
         self.loaded_checkpoint_dp_world_size = checkpoint['dp_world_size']
 
@@ -2499,6 +2509,8 @@ class DeepSpeedEngine(Module):
                         load_optimizer_states=load_optimizer_states)
                 else:
                     self.optimizer.load_state_dict(optim_checkpoint['optimizer'])
+                    
+            print('finished load_optimizer_states')
 
             if load_lr_scheduler_states and self.lr_scheduler is not None:
                 self.lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
@@ -2566,6 +2578,8 @@ class DeepSpeedEngine(Module):
 
         if not load_optimizer_states and not load_module_only:
             client_state['optimizer'] = optim_checkpoint['optimizer']
+            
+        print('before return _load_checkpoint')
 
         return load_path, client_state
 
@@ -2589,6 +2603,9 @@ class DeepSpeedEngine(Module):
         logger.info(
             f"loading {len(zero_sd_list)} zero partition checkpoints for rank {self.global_rank}"
         )
+        
+        print('before return _load_zero_checkpoint')
+        
         return True
 
     def _get_mp_rank_zero_checkpoint_names(self, load_dir, tag, mp_rank, dp_world_size):
