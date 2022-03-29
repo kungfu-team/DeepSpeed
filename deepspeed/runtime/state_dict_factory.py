@@ -161,11 +161,11 @@ class SDLoaderBase(ABC):
         #logger.info(f'checkpoint file list: {self.ckpt_list}')
         assert len(self.ckpt_list) > 0
 
-        sd = torch.load(self.ckpt_list[0], map_location=lambda storage, loc: storage)
+        #  sd = torch.load(self.ckpt_list[0], map_location=lambda storage, loc: storage)
 
         # check checkpoint count is same with saved mp_world_size
-        if 'mp_world_size' in sd.keys():
-            assert len(self.ckpt_list) == sd['mp_world_size'], f"checkpoint count {len(self.ckpt_list)} is different from saved mp_world_size {sd['mp_world_size']}"
+        #  if 'mp_world_size' in sd.keys():
+            #  assert len(self.ckpt_list) == sd['mp_world_size'], f"checkpoint count {len(self.ckpt_list)} is different from saved mp_world_size {sd['mp_world_size']}"
 
     @abstractmethod
     def merge_state_dict(self,
