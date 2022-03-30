@@ -1,4 +1,9 @@
-FROM nvidia/cuda:10.0-devel-ubuntu18.04
+#!/usr/bin/env -S sh -c ' docker build --rm -t kungfu.azurecr.io/deepspeed-base:latest .'
+
+FROM nvidia/cuda:11.3.1-devel-ubuntu18.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/London
 
 ##############################################################################
 # Temporary Installation Directory
@@ -90,25 +95,17 @@ RUN mv /usr/local/mpi/bin/mpirun /usr/local/mpi/bin/mpirun.real && \
 ##############################################################################
 # Python
 ##############################################################################
-ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHON_VERSION=3
-RUN apt-get install -y python3 python3-dev && \
+RUN apt-get install -y python3.8 python3.8-dev python3-pip && \
+        rm -f /usr/bin/python3 && \
+        ln -s /usr/bin/python3.8 /usr/bin/python3 && \
         rm -f /usr/bin/python && \
         ln -s /usr/bin/python3 /usr/bin/python && \
-        curl -O https://bootstrap.pypa.io/get-pip.py && \
-        python get-pip.py && \
-        rm get-pip.py && \
+        rm -f /usr/bin/pip && \
+        ln -s /usr/bin/pip3 /usr/bin/pip && \
         pip install --upgrade pip && \
-        # Print python an pip version
         python -V && pip -V
-RUN pip install pyyaml
-RUN pip install ipython
-
-##############################################################################
-# TensorFlow
-##############################################################################
-ENV TENSORFLOW_VERSION=1.15.2
-RUN pip install tensorflow-gpu==${TENSORFLOW_VERSION}
+RUN pip install pyyaml ipython
 
 ##############################################################################
 # Some Packages
@@ -157,11 +154,12 @@ RUN cat /etc/ssh/sshd_config > ${STAGE_DIR}/sshd_config && \
 ##############################################################################
 # PyTorch
 ##############################################################################
-ENV PYTORCH_VERSION=1.2.0
-ENV TORCHVISION_VERSION=0.4.0
-ENV TENSORBOARDX_VERSION=1.8
-RUN pip install torch==${PYTORCH_VERSION}
-RUN pip install torchvision==${TORCHVISION_VERSION}
+ENV PYTORCH_VERSION=1.11.0
+ENV TORCHVISION_VERSION=0.12.0
+ENV TENSORBOARDX_VERSION=2.5
+RUN pip install torch==${PYTORCH_VERSION} \
+        torchvision==${TORCHVISION_VERSION} \
+        --extra-index-url https://download.pytorch.org/whl/cu113
 RUN pip install tensorboardX==${TENSORBOARDX_VERSION}
 
 ##############################################################################
@@ -185,10 +183,9 @@ USER deepspeed
 ##############################################################################
 # DeepSpeed
 ##############################################################################
-RUN git clone https://github.com/microsoft/DeepSpeed.git ${STAGE_DIR}/DeepSpeed
+RUN git clone https://github.com/kungfu-team/DeepSpeed.git ${STAGE_DIR}/DeepSpeed
 RUN cd ${STAGE_DIR}/DeepSpeed && \
-        git checkout . && \
-        git checkout master && \
+        git checkout mw-tenplex && \
         ./install.sh --pip_sudo
 RUN rm -rf ${STAGE_DIR}/DeepSpeed
 RUN python -c "import deepspeed; print(deepspeed.__version__)"
