@@ -2,13 +2,15 @@
 Copyright 2020 The Microsoft DeepSpeed Team
 '''
 
-import torch
-import os
-import copy
 import collections
+import copy
 import json
+import os
 from abc import ABC, abstractmethod
+
+import torch
 from deepspeed.utils import logger
+
 from .weight_quantizer import WeightQuantization
 
 AUTO_MODULE_KEY = 'auto'
@@ -444,6 +446,12 @@ class MegatronSDLoader(SDLoaderBase):
             return found
 
         for key in keys_to_check:
+            mod = self.get_module(sd)
+            print(f'DEBUG: key {key}')
+            import pprint
+            mod_str = pprint.pformat(mod, indent=4)
+            print(f'DEBUG: module {mod_str}')
+
             assert check_key_exist(key, self.get_module(sd)), f'key: {key} is not found in the checkpoint {ckpt_file_name}'
 
     def get_checkpoint_version(self, state_dict):
