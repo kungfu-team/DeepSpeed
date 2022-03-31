@@ -447,10 +447,7 @@ class MegatronSDLoader(SDLoaderBase):
 
         for key in keys_to_check:
             mod = self.get_module(sd)
-            print(f'DEBUG: key {key}')
-            import pprint
-            mod_str = pprint.pformat(mod, indent=4)
-            print(f'DEBUG: module {mod_str}')
+            print(f'DEBUG: key {key}, module keys {mod.keys()}')
 
             assert check_key_exist(key, self.get_module(sd)), f'key: {key} is not found in the checkpoint {ckpt_file_name}'
 
