@@ -170,6 +170,15 @@ RUN rm -rf /usr/lib/python3/dist-packages/yaml && \
         rm -rf /usr/lib/python3/dist-packages/PyYAML-*
 
 ##############################################################################
+# Apex
+##############################################################################
+ARG BRANCH=22.03
+RUN git clone -b ${BRANCH} https://github.com/NVIDIA/apex /tmp/apex && \
+        cd /tmp/apex && \
+        pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
+RUN python -c "import apex"
+
+##############################################################################
 ## Add deepspeed user
 ###############################################################################
 # Add a deepspeed user with user id 8877
@@ -183,9 +192,11 @@ USER deepspeed
 ##############################################################################
 # DeepSpeed
 ##############################################################################
-RUN git clone https://github.com/kungfu-team/DeepSpeed.git ${STAGE_DIR}/DeepSpeed
+ARG USER=kungfu-team
+ARG REPO=DeepSpeed
+ARG BRANCH=mw-tenplex
+ADD https://api.github.com/repos/${USER}/${REPO}/git/refs/heads/${BRANCH} version.json
+RUN git clone -b $BRANCH https://github.com/${USER}/${REPO}.git ${STAGE_DIR}/DeepSpeed
 RUN cd ${STAGE_DIR}/DeepSpeed && \
-        git checkout mw-tenplex && \
         ./install.sh --pip_sudo
-RUN rm -rf ${STAGE_DIR}/DeepSpeed
 RUN python -c "import deepspeed; print(deepspeed.__version__)"
