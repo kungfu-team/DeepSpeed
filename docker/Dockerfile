@@ -101,6 +101,8 @@ RUN apt-get install -y python3.8 python3.8-dev python3-pip && \
         ln -s /usr/bin/python3.8 /usr/bin/python3 && \
         rm -f /usr/bin/python && \
         ln -s /usr/bin/python3 /usr/bin/python && \
+        rm -f /usr/bin/python3-config && \
+        ln -s /usr/bin/python3.8-config /usr/bin/python3-config && \
         rm -f /usr/bin/pip && \
         ln -s /usr/bin/pip3 /usr/bin/pip && \
         pip install --upgrade pip && \
