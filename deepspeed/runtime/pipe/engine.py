@@ -973,10 +973,6 @@ class PipelineEngine(DeepSpeedEngine):
         # a grad that needs to be communicated. We free the buffer immediately
         # after, so no need to restore it. The receiver also has a hack that skips
         # the recv. This is because NCCL does not let us send torch.BoolTensor :-(.
-        if self.module.__class__.__name__ == 'GPT2ModelPipe' or self.has_bool_tensors:
-            inputs = list(inputs)
-            inputs.pop()
-            inputs = tuple(inputs)
 
         if isinstance(inputs, torch.Tensor):
             assert inputs.grad is not None
