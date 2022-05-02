@@ -2,48 +2,33 @@
 Copyright (c) Microsoft Corporation
 Licensed under the MIT license.
 """
+import copy
+import json
 import os
 from typing import Union
 
 import torch
-import json
-import copy
 
+from ..autotuning.config import DeepSpeedAutotuningConfig
+from ..elasticity import (compute_elastic_config, elasticity_enabled,
+                          ensure_immutable_elastic_config)
+from ..elasticity.config import ElasticityConfigError
+from ..elasticity.constants import (ELASTICITY, IGNORE_NON_ELASTIC_BATCH_INFO,
+                                    IGNORE_NON_ELASTIC_BATCH_INFO_DEFAULT)
+from ..git_version_info import version as __version__
+from ..profiling.config import DeepSpeedFlopsProfilerConfig
+from ..utils import logger
+from .activation_checkpointing.config import \
+    DeepSpeedActivationCheckpointingConfig
+from .config_utils import (ScientificNotationEncoder,
+                           dict_raise_error_on_duplicate_keys,
+                           get_scalar_param)
 from .constants import *
-from .fp16.loss_scaler import (
-    INITIAL_LOSS_SCALE,
-    SCALE_WINDOW,
-    DELAYED_SHIFT,
-    MIN_LOSS_SCALE,
-)
-from .config_utils import (
-    get_scalar_param,
-    dict_raise_error_on_duplicate_keys,
-    ScientificNotationEncoder,
-)
+from .fp16.loss_scaler import (DELAYED_SHIFT, INITIAL_LOSS_SCALE,
+                               MIN_LOSS_SCALE, SCALE_WINDOW)
+from .swap_tensor.aio_config import get_aio_config
 from .zero.config import DeepSpeedZeroConfig
 from .zero.constants import *
-from .activation_checkpointing.config import DeepSpeedActivationCheckpointingConfig
-
-from ..git_version_info import version as __version__
-from ..utils import logger
-
-from ..elasticity import (
-    elasticity_enabled,
-    compute_elastic_config,
-    ensure_immutable_elastic_config,
-)
-from ..elasticity.config import ElasticityConfigError
-from ..elasticity.constants import (
-    ELASTICITY,
-    IGNORE_NON_ELASTIC_BATCH_INFO,
-    IGNORE_NON_ELASTIC_BATCH_INFO_DEFAULT,
-)
-
-from ..profiling.config import DeepSpeedFlopsProfilerConfig
-from ..autotuning.config import DeepSpeedAutotuningConfig
-
-from .swap_tensor.aio_config import get_aio_config
 
 TENSOR_CORE_ALIGN_SIZE = 8
 
@@ -872,6 +857,10 @@ class DeepSpeedConfig(object):
         self._initialize_params(self._param_dict)
         self._configure_train_batch_size()
         self._do_sanity_check()
+
+        # LOGGING
+        attr = vars(self)
+        print(json.dumps(attr, indent=4))
 
     def _initialize_params(self, param_dict):
         self.train_batch_size = get_train_batch_size(param_dict)
