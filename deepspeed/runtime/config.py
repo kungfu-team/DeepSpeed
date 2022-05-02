@@ -855,22 +855,24 @@ class DeepSpeedConfig(object):
             self._param_dict[GRADIENT_ACCUMULATION_STEPS] = gradient_accu_steps
 
         # LOGGING
+        import pprint
         attr = vars(self)
         print('A')
-        print(json.dumps(attr, indent=4))
+        pprint.pprint(attr)
 
         self._initialize_params(self._param_dict)
         # LOGGING
         attr = vars(self)
         print('B')
-        print(json.dumps(attr, indent=4))
+        pprint.pprint(attr)
+        # LOGGING END
         self._configure_train_batch_size()
         self._do_sanity_check()
 
         # LOGGING
         attr = vars(self)
         print('C')
-        print(json.dumps(attr, indent=4))
+        pprint.pprint(attr)
 
     def _initialize_params(self, param_dict):
         self.train_batch_size = get_train_batch_size(param_dict)
