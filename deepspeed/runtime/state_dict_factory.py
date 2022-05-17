@@ -72,6 +72,7 @@ class SDLoaderBase(ABC):
                 Same with case (2).
         """
         if is_pipe_parallel and module_key is not None and mp_world_size != num_ckpt:
+            logger.info('is_pipe_parallel and module_key is not None and mp_world_size != num_ckpt')
             mp_world_size = num_ckpt
             idx = 0
 
@@ -79,11 +80,13 @@ class SDLoaderBase(ABC):
 
         merge_count = 1
         if num_ckpt == mp_world_size:
+            logger.info('SDLoaderBase load num_ckpt == mp_world_size')
             assert os.path.exists(load_path)
             #logger.info(f'rank: {mp_rank} loading checkpoint: {load_path}')
             sd = torch.load(load_path, map_location=lambda storage, loc: storage)
 
             if quantize:
+                logger.info('SDLoaderBase load quantize')
                 quantizer = WeightQuantization(mlp_extra_grouping=mlp_extra_grouping,
                                                mp_size=mp_world_size)
                 sd_module, all_scales = quantizer.sd_quantize_megatron(self.get_module(sd), quantize_bits, quantize_groups)
@@ -91,9 +94,11 @@ class SDLoaderBase(ABC):
             else:
                 all_scales = None
         elif num_ckpt > mp_world_size:
+            logger.info('SDLoaderBase load num_ckpt > mp_world_size')
             sd, all_scales, merge_count = self.merge_state_dict(mp_world_size, mp_rank, quantize, \
                 quantize_bits, quantize_groups, mlp_extra_grouping)
         else:
+            logger.info('SDLoaderBase load else')
             sd, all_scales = self.split_state_dict(mp_world_size, mp_rank, quantize, quantize_bits, \
                 quantize_groups, mlp_extra_grouping)
         return load_path, sd, (all_scales, merge_count)
@@ -313,6 +318,8 @@ class MegatronSDLoader(SDLoaderBase):
                          mlp_extra_grouping=True):
         #  self.sanity_check(self.ckpt_list[0])  # not working
 
+        logger.info('MegatronSDLoader merge_state_dict')
+
         sd_list = self.get_merge_state_dicts(mp_world_size, mp_rank)
         ds_sd = copy.deepcopy(sd_list[0])
         new_client_sd = collections.OrderedDict()
@@ -374,6 +381,8 @@ class MegatronSDLoader(SDLoaderBase):
                          groups=64,
                          mlp_extra_grouping=True):
         #  self.sanity_check(self.ckpt_list[0])  # not working
+
+        logger.info('MegatronSDLoader split_state_dict')
 
         sd, num_to_split, ckpt_offset = self.get_split_state_dict(mp_world_size, mp_rank)
         ds_sd = copy.deepcopy(sd)
