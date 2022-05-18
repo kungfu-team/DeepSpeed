@@ -7,7 +7,6 @@ import copy
 import json
 import os
 from abc import ABC, abstractmethod
-import time
 
 import torch
 from deepspeed.utils import logger
@@ -73,10 +72,8 @@ class SDLoaderBase(ABC):
                 Same with case (2).
         """
 
-        ts = time.time_ns()
-
         if is_pipe_parallel and module_key is not None and mp_world_size != num_ckpt:
-            logger.info(f'SDLoaderBase load {ts} is_pipe_parallel \
+            logger.info(f'SDLoaderBase load {ts} is_pipe_parallel==True \
                         and module_key is not None \
                         and mp_world_size {mp_world_size} != {num_ckpt} num_ckpt')
             mp_world_size = num_ckpt
@@ -85,28 +82,17 @@ class SDLoaderBase(ABC):
         load_path = self.ckpt_list[idx]
 
         merge_count = 1
-        if num_ckpt == mp_world_size:
-            logger.info(f'SDLoaderBase load {ts} num_ckpt {num_ckpt} == {mp_world_size} mp_world_size')
-            assert os.path.exists(load_path)
-            #logger.info(f'rank: {mp_rank} loading checkpoint: {load_path}')
-            sd = torch.load(load_path, map_location=lambda storage, loc: storage)
+        assert os.path.exists(load_path)
+        sd = torch.load(load_path, map_location=lambda storage, loc: storage)
 
-            if quantize:
-                logger.info(f'SDLoaderBase load {ts} quantize')
-                quantizer = WeightQuantization(mlp_extra_grouping=mlp_extra_grouping,
-                                               mp_size=mp_world_size)
-                sd_module, all_scales = quantizer.sd_quantize_megatron(self.get_module(sd), quantize_bits, quantize_groups)
-                self.set_module(sd, sd_module)
-            else:
-                all_scales = None
-        elif num_ckpt > mp_world_size:
-            logger.info(f'SDLoaderBase load {ts} num_ckpt {num_ckpt} > {mp_world_size} mp_world_size')
-            sd, all_scales, merge_count = self.merge_state_dict(mp_world_size, mp_rank, quantize, \
-                quantize_bits, quantize_groups, mlp_extra_grouping)
+        if quantize:
+            quantizer = WeightQuantization(mlp_extra_grouping=mlp_extra_grouping,
+                                           mp_size=mp_world_size)
+            sd_module, all_scales = quantizer.sd_quantize_megatron(self.get_module(sd), quantize_bits, quantize_groups)
+            self.set_module(sd, sd_module)
         else:
-            logger.info(f'SDLoaderBase load {ts} else')
-            sd, all_scales = self.split_state_dict(mp_world_size, mp_rank, quantize, quantize_bits, \
-                quantize_groups, mlp_extra_grouping)
+            all_scales = None
+
         return load_path, sd, (all_scales, merge_count)
 
     def get_merge_state_dicts(self, mp_world_size, mp_rank):
