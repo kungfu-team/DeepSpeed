@@ -549,6 +549,7 @@ class PipelineModule(nn.Module):
         idx = local_layer_idx + self._local_start
         layer_ckpt_path = os.path.join(ckpt_dir, f'layer_{idx:02d}-')
         layer_ckpt_path += "*model_states.pt"
+        logger.info(f'ckpt_layer_path_list layer_ckpt_path {layer_ckpt_path}')  # DEBUG
         ckpt_files = glob.glob(layer_ckpt_path)
         ckpt_files.sort()
         return ckpt_files
@@ -586,6 +587,12 @@ class PipelineModule(nn.Module):
             model_ckpt_list = self.ckpt_layer_path_list(load_dir, idx)
             mp_rank = self._grid.get_slice_parallel_rank()
             mp_world_size = self._grid.get_slice_parallel_world_size()
+
+            # DEBUG
+            logger.info(f'load_state_dir idx {idx}')
+            logger.info(f'load_state_dir model_ckpt_list {model_ckpt_list}')
+            logger.info(f'load_state_dir mp_rank {mp_rank}')
+            logger.info(f'load_state_dir mp_world_size {mp_world_size}')
 
             sd_loader = SDLoaderFactory.get_sd_loader(model_ckpt_list, version=2.0)
             load_path, checkpoint, _ = sd_loader.load(mp_world_size, mp_rank, module_key=None, is_pipe_parallel=True)
