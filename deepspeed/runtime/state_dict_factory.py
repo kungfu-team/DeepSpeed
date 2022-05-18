@@ -73,9 +73,9 @@ class SDLoaderBase(ABC):
         """
 
         if is_pipe_parallel and module_key is not None and mp_world_size != num_ckpt:
-            logger.info(f'SDLoaderBase load {ts} is_pipe_parallel==True \
-                        and module_key is not None \
-                        and mp_world_size {mp_world_size} != {num_ckpt} num_ckpt')
+            logger.info(f'SDLoaderBase load is_pipe_parallel==True \
+                        and module_key is not None and \
+                        mp_world_size {mp_world_size} != {num_ckpt} num_ckpt')
             mp_world_size = num_ckpt
             idx = 0
 
