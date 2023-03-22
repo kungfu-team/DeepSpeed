@@ -3,12 +3,12 @@ Copyright 2020 The Microsoft DeepSpeed Team
 '''
 
 import torch
-import torch.distributed as dist
-import time
+from deepspeed import comm as dist
 import cupy
 import numpy as np
 
 from deepspeed.runtime.compression.cupy import CupyBackend
+from deepspeed.accelerator import get_accelerator
 
 
 class NcclBackend(object):
@@ -21,6 +21,11 @@ class NcclBackend(object):
         self.rank = dist.get_rank(group=self.world_group)
         self.size = dist.get_world_size(group=self.world_group)
         self.compression_backend = CupyBackend()
+        self.bool_not_supported = False
+        TORCH_MAJOR = int(torch.__version__.split('.')[0])
+        TORCH_MINOR = int(torch.__version__.split('.')[1])
+        if TORCH_MAJOR >= 1 and TORCH_MINOR >= 10:
+            self.bool_not_supported = True
 
     def my_igather(self, rank, size, group, sendbuf, recvbuf, root):
         req = []
@@ -64,13 +69,19 @@ class NcclBackend(object):
             buffer_m = torch.cat([buffer_m, empty_tensor])
 
         buffer_m.add_(worker_error)
-        worker_scale = torch.norm(buffer_m) / np.sqrt(torch.numel(buffer_m))
+        worker_scale = torch.norm(buffer_m) / np.sqrt(buffer_m.numel())
         worker_error.set_(buffer_m - worker_scale *
                           buffer_m.sign().add_(1).bool().float().add_(-0.5).mul_(2.0))
 
-        cupy_sign_list_packed = self.compression_backend.compress_by_chunk(
-            self.compression_backend.torch2cupy(buffer_m.sign_().add_(1).bool()),
-            self.size)
+        if self.bool_not_supported:
+            cupy_sign_list_packed = self.compression_backend.compress_by_chunk(
+                self.compression_backend.torch2cupy(
+                    buffer_m.sign_().add_(1).bool().to(dtype=torch.uint8)),
+                self.size)
+        else:
+            cupy_sign_list_packed = self.compression_backend.compress_by_chunk(
+                self.compression_backend.torch2cupy(buffer_m.sign_().add_(1).bool()),
+                self.size)
         cupy_worker_scale = self.compression_backend.torch2cupy(worker_scale)
 
         cupy_recvbuf_sign = cupy.zeros(
@@ -90,7 +101,8 @@ class NcclBackend(object):
         recvbuf_scale = [
             torch.zeros(1,
                         dtype=worker_scale.dtype,
-                        device=torch.device(local_rank)) for i in range(self.size)
+                        device=torch.device(get_accelerator().device_name(local_rank)))
+            for i in range(self.size)
         ]
 
         # communication phase 1
@@ -124,10 +136,16 @@ class NcclBackend(object):
 
         # cupy_server_scale = self.compression_backend.torch2cupy(server_scale)
 
-        cupy_server_sign_packed = self.compression_backend.compress_by_chunk(
-            self.compression_backend.torch2cupy(
-                compensated_server_m.sign_().add_(1).bool()),
-            1)
+        if self.bool_not_supported:
+            cupy_server_sign_packed = self.compression_backend.compress_by_chunk(
+                self.compression_backend.torch2cupy(
+                    compensated_server_m.sign_().add_(1).bool().to(dtype=torch.uint8)),
+                1)
+        else:
+            cupy_server_sign_packed = self.compression_backend.compress_by_chunk(
+                self.compression_backend.torch2cupy(
+                    compensated_server_m.sign_().add_(1).bool()),
+                1)
         compensated_server_m = None
 
         cupy_recvbuf_sign_server = cupy.zeros(

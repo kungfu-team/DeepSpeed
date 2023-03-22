@@ -1,5 +1,6 @@
 ---
 title: "Mixture of Experts"
+tags: MoE training
 ---
 
 DeepSpeed v0.5 introduces new support for training Mixture of Experts (MoE) models. MoE models are an emerging class of sparsely activated models that have sublinear compute costs with respect to their parameters. For example, the [Switch Transformer](https://arxiv.org/abs/2101.03961) consists of over 1.6 trillion parameters, while the compute required to train it is approximately equal to that of a 10 billion-parameter dense model. This increase in model size offers tremendous accuracy gains for a constant compute budget.
@@ -164,4 +165,4 @@ We have devised a new technique called “Random Token Selection” that greatly
 
 ## Advanced MoE usage
 
-We have added an example of applying MoE to NLG models. Please read more in this [newsletter](https://www.deepspeed.ai/news/2021/12/09/deepspeed-moe-nlg.html) and [tutorial](/tutorials/mixture-of-experts-nlg/).
+We have added an example of applying MoE to NLG models. Please read more in this [newsletter](https://www.deepspeed.ai/2021/12/09/deepspeed-moe-nlg.html) and [tutorial](/tutorials/mixture-of-experts-nlg/).

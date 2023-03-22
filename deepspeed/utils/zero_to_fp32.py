@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+'''Copyright The Microsoft DeepSpeed Team'''
 
 # This script extracts fp32 consolidated weights from a zero 2 and 3 DeepSpeed checkpoints. It gets
 # copied into the top level checkpoint dir, so the user can easily do the conversion at any point in
@@ -12,15 +13,14 @@ import torch
 import glob
 import math
 import os
+import re
 from collections import OrderedDict
 
 # while this script doesn't use deepspeed to recover data, since the checkpoints are pickled with
 # DeepSpeed data structures it has to be available in the current python environment.
-import deepspeed
 from deepspeed.utils import logger
 from deepspeed.checkpoint.constants import (DS_VERSION,
                                             OPTIMIZER_STATE_DICT,
-                                            PARAM_SHAPES,
                                             SINGLE_PARTITION_OF_FP32_GROUPS,
                                             FP32_FLAT_GROUPS,
                                             ZERO_STAGE,
@@ -32,6 +32,19 @@ debug = 0
 
 # load to cpu
 device = torch.device('cpu')
+
+
+def atoi(text):
+    return int(text) if text.isdigit() else text
+
+
+def natural_keys(text):
+    '''
+    alist.sort(key=natural_keys) sorts in human order
+    http://nedbatchelder.com/blog/200712/human_sorting.html
+    (See Toothy's implementation in the comments)
+    '''
+    return [atoi(c) for c in re.split(r'(\d+)', text)]
 
 
 def get_model_state_file(checkpoint_dir, zero_stage):
@@ -52,7 +65,9 @@ def get_model_state_file(checkpoint_dir, zero_stage):
 
 def get_optim_files(checkpoint_dir):
     # XXX: need to test that this simple glob rule works for multi-node setup too
-    optim_files = sorted(glob.glob(os.path.join(checkpoint_dir, "*_optim_states.pt")))
+    optim_files = sorted(glob.glob(os.path.join(checkpoint_dir,
+                                                "*_optim_states.pt")),
+                         key=natural_keys)
 
     if len(optim_files) == 0:
         raise FileNotFoundError(

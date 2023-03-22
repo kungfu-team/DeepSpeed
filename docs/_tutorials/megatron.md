@@ -1,5 +1,6 @@
 ---
 title: "Megatron-LM GPT2"
+tags: training
 ---
 
 If you haven't already, we advise you to first read through the [Getting
@@ -18,7 +19,7 @@ reduction_** from using DeepSpeed.
 
 ## Training GPT-2 with the Original Megatron-LM
 
-We've copied the original model code from [Megatron-LM](https://github.com/NVIDIA/Megatron-LM) into DeepSpeed [Megatron-LM](https://github.com/microsoft/DeepSpeedExamples/tree/master/Megatron-LM-v1.1.5-ZeRO3) and made it available as a submodule. To download, execute:
+We've copied the original model code from [Megatron-LM](https://github.com/NVIDIA/Megatron-LM) into DeepSpeed [Megatron-LM](https://github.com/microsoft/Megatron-DeepSpeed) and made it available as a submodule. To download, execute:
 ```bash
 git submodule update --init --recursive
 ```

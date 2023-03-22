@@ -1,8 +1,9 @@
 """
 Copyright 2020 The Microsoft DeepSpeed Team
 """
-import torch
 from .builder import CUDAOpBuilder
+
+import sys
 
 
 class FusedLambBuilder(CUDAOpBuilder):
@@ -34,6 +35,9 @@ class FusedLambBuilder(CUDAOpBuilder):
                 '-DROCM_VERSION_MINOR=%s' % ROCM_MINOR
             ]
         else:
-            nvcc_flags.extend(['-lineinfo',
-                               '--use_fast_math'] + self.compute_capability_args())
+            nvcc_flags.extend([
+                '-allow-unsupported-compiler' if sys.platform == "win32" else '',
+                '-lineinfo',
+                '--use_fast_math'
+            ] + self.compute_capability_args())
         return nvcc_flags

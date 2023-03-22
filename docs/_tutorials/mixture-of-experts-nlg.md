@@ -1,12 +1,13 @@
 ---
 title: "Mixture of Experts for NLG models"
+tags: MoE training
 ---
 
 In this tutorial, we introduce how to apply DeepSpeed Mixture of Experts (MoE) to NLG models, which reduces the training cost by 5 times and reduce the MoE model size by 3 times (details in our [Blog]({{ site.press_release_v6 }})). We use the GPT-3 like models in Megatron-LM framework as the example. Before reading this tutorial, we recommend to first read the tutorials about [Mixture of Experts](/tutorials/mixture-of-experts/) and [Megatron-LM GPT pre-training](/tutorials/megatron/).
 
 ## 1. Installation
 
-You would need to install DeepSpeed v0.6.0 or higher to use the MoE feature. The MoE for NLG model examples are in the [Megatron-DeepSpeed](https://github.com/microsoft/Megatron-DeepSpeed) repo (currently under [the moe branch](https://github.com/microsoft/Megatron-DeepSpeed/tree/moe) but later could be merged to main branch).
+You would need to install DeepSpeed v0.6.0 or higher to use the MoE feature. The MoE for NLG model examples are in the [Megatron-DeepSpeed](https://github.com/microsoft/Megatron-DeepSpeed) repo under the MoE folder.
 
 ## 2. Training NLG+MoE models
 
@@ -14,7 +15,7 @@ You would need to install DeepSpeed v0.6.0 or higher to use the MoE feature. The
 To apply MoE to the GPT-style model, we made several changes in Megatron framework, mostly in `megatron/model/` where we add the MoE layers into the model.
 
 ### 2.2. Pre-training the Standard MoE model
-We provide example training scripts under [examples/MoE](https://github.com/microsoft/Megatron-DeepSpeed/tree/moe/examples/MoE) which we used to perform the experiments in our [Blog]({{ site.press_release_v6 }}). There are a few new hyperparameters for standard MoE model:
+We provide example training scripts under [examples/MoE](https://github.com/microsoft/Megatron-DeepSpeed/tree/main/examples/MoE) which we used to perform the experiments in our [Blog]({{ site.press_release_v6 }}). There are a few new hyperparameters for standard MoE model:
 
 `--num-experts`: the number of experts per MoE layer. In our experiments we set it to 128. Larger number of experts tend to provide better convergence, but it's a diminishing return.
 
@@ -29,7 +30,7 @@ We provide example training scripts under [examples/MoE](https://github.com/micr
 
 
 ### 2.3. Pre-training the PR-MoE model
-PR-MoE is a new designed MoE models, standing for Pyramid-Residual-MoE, which improves the parameter efficiency up to 3x as compared to standard MoE. Please see our [Blog]({{ site.press_release_v6 }}) for more details. We provide example training scripts under [examples/MoE](https://github.com/microsoft/Megatron-DeepSpeed/tree/moe/examples/MoE). There are a few different hyperparameters for PR-MoE model compared to standard MoE:
+PR-MoE is a new designed MoE models, standing for Pyramid-Residual-MoE, which improves the parameter efficiency up to 3x as compared to standard MoE. Please see our [Blog]({{ site.press_release_v6 }}) for more details. We provide example training scripts under [examples/MoE](https://github.com/microsoft/Megatron-DeepSpeed/tree/main/examples/MoE). There are a few different hyperparameters for PR-MoE model compared to standard MoE:
 
 `--num-experts`: Instead of providing a single number, to enable Pyramid-MoE, you need to provide a list, whose length is the same as the number of MoE layers. We suggest to use more experts in the latter stage (close to output) of the model.
 
@@ -66,4 +67,4 @@ MoS, standing for Mixture-of-Students, is a staged distillation-based technique 
 
 In addition to the new parameters above, we observe that using the teacher PR-MoE during the entire training process may adversely impact the final student model accuracy. In our experiments, we use a staged distillation method by stopping distillation early in the training process (e.g., after 400K steps) and perform optimization only against the standard language modeling loss for the rest of the training.
 
-We provide example training scripts under [examples/MoE](https://github.com/microsoft/Megatron-DeepSpeed/tree/moe/examples/MoE). Details of our parameter settings can be found in the example training scripts. The performance results of MoS can be seen from our [blog post](https://www.microsoft.com/en-us/research/blog/deepspeed-powers-8x-larger-moe-model-training-with-high-performance/) and our [paper](https://arxiv.org/abs/2201.05596).
+We provide example training scripts under [examples/MoE](https://github.com/microsoft/Megatron-DeepSpeed/tree/main/examples/MoE). Details of our parameter settings can be found in the example training scripts. The performance results of MoS can be seen from our [blog post](https://www.microsoft.com/en-us/research/blog/deepspeed-powers-8x-larger-moe-model-training-with-high-performance/) and our [paper](https://arxiv.org/abs/2201.05596).
