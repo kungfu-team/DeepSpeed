@@ -1,4 +1,6 @@
-FROM nvidia/cuda:10.0-devel-ubuntu18.04
+#!/usr/bin/env -S sh -c 'docker build --rm -t kungfu.azurecr.io/mw-deepspeed-baseline:latest -f $0 .'
+
+FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
 ##############################################################################
 # Temporary Installation Directory
@@ -105,12 +107,6 @@ RUN pip install pyyaml
 RUN pip install ipython
 
 ##############################################################################
-# TensorFlow
-##############################################################################
-ENV TENSORFLOW_VERSION=1.15.2
-RUN pip install tensorflow-gpu==${TENSORFLOW_VERSION}
-
-##############################################################################
 # Some Packages
 ##############################################################################
 RUN apt-get update && \
@@ -157,12 +153,8 @@ RUN cat /etc/ssh/sshd_config > ${STAGE_DIR}/sshd_config && \
 ##############################################################################
 # PyTorch
 ##############################################################################
-ENV PYTORCH_VERSION=1.2.0
-ENV TORCHVISION_VERSION=0.4.0
-ENV TENSORBOARDX_VERSION=1.8
-RUN pip install torch==${PYTORCH_VERSION}
-RUN pip install torchvision==${TORCHVISION_VERSION}
-RUN pip install tensorboardX==${TENSORBOARDX_VERSION}
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+RUN pip install tensorboardX
 
 ##############################################################################
 # PyYAML build issue
@@ -185,10 +177,10 @@ USER deepspeed
 ##############################################################################
 # DeepSpeed
 ##############################################################################
-RUN git clone https://github.com/microsoft/DeepSpeed.git ${STAGE_DIR}/DeepSpeed
+RUN git clone https://github.com/kungfu-team/DeepSpeed.git ${STAGE_DIR}/DeepSpeed
 RUN cd ${STAGE_DIR}/DeepSpeed && \
         git checkout . && \
-        git checkout master && \
+        git checkout mw-elasticity && \
         ./install.sh --pip_sudo
 RUN rm -rf ${STAGE_DIR}/DeepSpeed
 RUN python -c "import deepspeed; print(deepspeed.__version__)"
