@@ -1,4 +1,4 @@
-#!/usr/bin/env -S sh -c 'docker build --rm -t kungfu.azurecr.io/mw-deepspeed-baseline:latest -f $0 .'
+#!/usr/bin/env -S sh -c 'docker build --rm -t kungfu.azurecr.io/mw-deepspeed:latest -f $0 .'
 
 FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
 
